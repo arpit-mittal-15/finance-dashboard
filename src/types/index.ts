@@ -1,0 +1,59 @@
+// ── Transaction ──────────────────────────────────────────────
+export type TransactionType = "income" | "expense";
+
+export interface Transaction {
+  id: string;
+  date: string; // ISO YYYY-MM-DD
+  amount: number;
+  category: string;
+  type: TransactionType;
+  description: string;
+}
+
+// ── Role ─────────────────────────────────────────────────────
+export type Role = "viewer" | "admin";
+
+// ── Filters & Sorting ────────────────────────────────────────
+export interface Filters {
+  type: TransactionType | "all";
+  category: string; // "all" | specific category
+  dateStart: string;
+  dateEnd: string;
+}
+
+export interface SortConfig {
+  field: "date" | "amount";
+  direction: "asc" | "desc";
+}
+
+// ── Category info ────────────────────────────────────────────
+export interface CategoryInfo {
+  name: string;
+  color: string;
+  bgLight: string;
+  bgDark: string;
+}
+
+// ── Chart data shapes ────────────────────────────────────────
+export interface BalancePoint {
+  date: string;
+  balance: number;
+  income: number;
+  expense: number;
+}
+
+export interface CategorySlice {
+  name: string;
+  value: number;
+  color: string;
+}
+
+// ── Insight ──────────────────────────────────────────────────
+export interface Insight {
+  id: string;
+  icon: string; // lucide icon name mapped in component
+  title: string;
+  value: string;
+  change?: number; // percentage
+  type: "positive" | "negative" | "neutral" | "warning";
+}
