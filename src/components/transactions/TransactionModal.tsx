@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useFinanceStore } from "../../store/useFinanceStore";
-import type { Transaction } from "../../types";
+import type { Transaction, TransactionType } from "../../types";
 import Modal from "../ui/Modal";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from "../../data/categories";
 
@@ -14,7 +14,7 @@ const EMPTY_FORM = {
   date: new Date().toISOString().slice(0, 10),
   amount: "",
   category: "",
-  type: "expense" as const,
+  type: "expense" as TransactionType,
   description: "",
 };
 
@@ -104,7 +104,7 @@ export default function TransactionModal({
                     : "bg-slate-100 dark:bg-slate-800 text-slate-500 border-2 border-transparent hover:border-slate-300 dark:hover:border-slate-600"
                 }`}
               >
-                {t === "income" ? "💰 Income" : "💸 Expense"}
+                {t === "income" ? "Income" : "Expense"}
               </button>
             ))}
           </div>
