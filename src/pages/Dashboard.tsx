@@ -23,7 +23,8 @@ export default function Dashboard() {
   const dateFrom = useMemo(() => {
     if (chartRange === "ALL") return "";
     const dates = transactions.map((t) => t.date).sort();
-    const latest = dates[dates.length - 1] || new Date().toISOString().slice(0, 10);
+    const latest =
+      dates[dates.length - 1] || new Date().toISOString().slice(0, 10);
     const d = new Date(latest + "T00:00:00");
     const months: Record<string, number> = { "1M": 1, "3M": 3, "6M": 6 };
     d.setMonth(d.getMonth() - months[chartRange]);

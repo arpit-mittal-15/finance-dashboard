@@ -21,8 +21,7 @@ export default function Badge({
       "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300",
     income:
       "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400",
-    expense:
-      "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400",
+    expense: "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400",
   };
 
   const classes =

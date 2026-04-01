@@ -121,7 +121,11 @@ export const useFinanceStore = create<FinanceState>()(
         })),
 
       resetFilters: () =>
-        set({ filters: { ...DEFAULT_FILTERS }, searchQuery: "", currentPage: 1 }),
+        set({
+          filters: { ...DEFAULT_FILTERS },
+          searchQuery: "",
+          currentPage: 1,
+        }),
 
       setSearchQuery: (q) => set({ searchQuery: q, currentPage: 1 }),
 
@@ -216,10 +220,7 @@ export const useFinanceStore = create<FinanceState>()(
           expense: number;
         }[] = [];
         let running = 0;
-        const dateMap: Record<
-          string,
-          { income: number; expense: number }
-        > = {};
+        const dateMap: Record<string, { income: number; expense: number }> = {};
 
         sorted.forEach((t) => {
           if (!dateMap[t.date]) {
@@ -250,9 +251,7 @@ export const useFinanceStore = create<FinanceState>()(
 
       getMonthlyComparison: () => {
         const tx = get().transactions;
-        const months = [
-          ...new Set(tx.map((t) => getMonth(t.date))),
-        ].sort();
+        const months = [...new Set(tx.map((t) => getMonth(t.date)))].sort();
         const latest = months[months.length - 1] || "";
         const prev = months[months.length - 2] || "";
 
@@ -297,7 +296,12 @@ export const useFinanceStore = create<FinanceState>()(
           icon: "piggy-bank",
           title: "Savings Rate",
           value: `${savingsRate}%`,
-          type: savingsRate >= 30 ? "positive" : savingsRate >= 10 ? "neutral" : "negative",
+          type:
+            savingsRate >= 30
+              ? "positive"
+              : savingsRate >= 10
+                ? "neutral"
+                : "negative",
         });
 
         // 2. Highest spending category
@@ -324,7 +328,12 @@ export const useFinanceStore = create<FinanceState>()(
           title: "Monthly Expenses",
           value: `${expChange >= 0 ? "+" : ""}${expChange}% vs last month`,
           change: expChange,
-          type: expChange > 10 ? "negative" : expChange < -5 ? "positive" : "neutral",
+          type:
+            expChange > 10
+              ? "negative"
+              : expChange < -5
+                ? "positive"
+                : "neutral",
         });
 
         // 4. Average daily expense (current month)

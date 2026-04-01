@@ -83,7 +83,8 @@ export function getCategoryColor(category: string): string {
 /** Return Tailwind badge classes for a given category */
 export function getCategoryBadgeClasses(category: string): string {
   const cat = CATEGORIES[category];
-  if (!cat) return "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300";
+  if (!cat)
+    return "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300";
   return `${cat.bgLight} ${cat.bgDark}`;
 }
 

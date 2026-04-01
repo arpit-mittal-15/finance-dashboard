@@ -73,8 +73,14 @@ export default function SummaryCards() {
   const totals = useFinanceStore((s) => s.getTotals());
   const comparison = useFinanceStore((s) => s.getMonthlyComparison());
 
-  const incomeChange = percentageChange(comparison.currentIncome, comparison.previousIncome);
-  const expenseChange = percentageChange(comparison.currentExpense, comparison.previousExpense);
+  const incomeChange = percentageChange(
+    comparison.currentIncome,
+    comparison.previousIncome,
+  );
+  const expenseChange = percentageChange(
+    comparison.currentExpense,
+    comparison.previousExpense,
+  );
   const balanceChange = percentageChange(
     comparison.currentIncome - comparison.currentExpense,
     comparison.previousIncome - comparison.previousExpense,
@@ -82,15 +88,36 @@ export default function SummaryCards() {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <SummaryCard title="Total Balance" value={totals.balance} icon={Wallet}
-        iconBg="bg-blue-50 dark:bg-blue-500/10" iconColor="text-blue-600 dark:text-blue-400"
-        valueColor="text-slate-900 dark:text-white" change={balanceChange} delay={0} />
-      <SummaryCard title="Total Income" value={totals.income} icon={TrendingUp}
-        iconBg="bg-emerald-50 dark:bg-emerald-500/10" iconColor="text-emerald-600 dark:text-emerald-400"
-        valueColor="text-emerald-600 dark:text-emerald-400" change={incomeChange} delay={0.05} />
-      <SummaryCard title="Total Expenses" value={totals.expense} icon={TrendingDown}
-        iconBg="bg-red-50 dark:bg-red-500/10" iconColor="text-red-500 dark:text-red-400"
-        valueColor="text-red-500 dark:text-red-400" change={expenseChange} delay={0.1} />
+      <SummaryCard
+        title="Total Balance"
+        value={totals.balance}
+        icon={Wallet}
+        iconBg="bg-blue-50 dark:bg-blue-500/10"
+        iconColor="text-blue-600 dark:text-blue-400"
+        valueColor="text-slate-900 dark:text-white"
+        change={balanceChange}
+        delay={0}
+      />
+      <SummaryCard
+        title="Total Income"
+        value={totals.income}
+        icon={TrendingUp}
+        iconBg="bg-emerald-50 dark:bg-emerald-500/10"
+        iconColor="text-emerald-600 dark:text-emerald-400"
+        valueColor="text-emerald-600 dark:text-emerald-400"
+        change={incomeChange}
+        delay={0.05}
+      />
+      <SummaryCard
+        title="Total Expenses"
+        value={totals.expense}
+        icon={TrendingDown}
+        iconBg="bg-red-50 dark:bg-red-500/10"
+        iconColor="text-red-500 dark:text-red-400"
+        valueColor="text-red-500 dark:text-red-400"
+        change={expenseChange}
+        delay={0.1}
+      />
     </div>
   );
 }
