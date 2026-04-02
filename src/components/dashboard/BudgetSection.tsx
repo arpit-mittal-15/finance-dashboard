@@ -3,6 +3,7 @@ import { useFinanceStore } from "../../store/useFinanceStore";
 import { EXPENSE_CATEGORIES } from "../../data/categories";
 import { AlertCircle, Target, Plus, Check } from "lucide-react";
 import Modal from "../ui/Modal";
+import Tooltip from "../ui/Tooltip";
 
 export default function BudgetSection() {
   const getBudgetProgress = useFinanceStore((s) => s.getBudgetProgress);
@@ -34,9 +35,11 @@ export default function BudgetSection() {
             Track your monthly spending limits.
           </p>
         </div>
-        <button onClick={() => setOpen(true)} className="btn-secondary text-sm py-1.5 h-auto flex-shrink-0">
-          <Plus className="w-4 h-4 mr-1" /> Add / Edit
-        </button>
+        <Tooltip content="Set new budget limits">
+          <button onClick={() => setOpen(true)} className="btn-secondary text-sm py-1.5 h-auto flex-shrink-0">
+            <Plus className="w-4 h-4 mr-1" /> Add / Edit
+          </button>
+        </Tooltip>
       </div>
 
       <div className="space-y-4 flex-1">

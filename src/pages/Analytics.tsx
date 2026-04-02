@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { useFinanceStore } from "../store/useFinanceStore";
 import BalanceChart from "../components/dashboard/BalanceChart";
 import CategoryChart from "../components/dashboard/CategoryChart";
 import AdvancedAnalytics from "../components/dashboard/AdvancedAnalytics";
+import Tooltip from "../components/ui/Tooltip";
 
 type TimeRange = "1M" | "3M" | "6M" | "ALL";
 
@@ -28,22 +30,29 @@ export default function Analytics() {
   }, [chartRange, transactions]);
 
   return (
-    <div className="space-y-6">
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6"
+    >
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Analytics</h2>
         <div className="flex gap-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5">
           {RANGES.map((r) => (
-            <button
-              key={r.key}
-              onClick={() => setChartRange(r.key)}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                chartRange === r.key
-                  ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
-              }`}
-            >
-              {r.label}
-            </button>
+            <Tooltip key={r.key} content={`View past ${r.label}`}>
+              <button
+                onClick={() => setChartRange(r.key)}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  chartRange === r.key
+                    ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                }`}
+              >
+                {r.label}
+              </button>
+            </Tooltip>
           ))}
         </div>
       </div>
@@ -58,6 +67,6 @@ export default function Analytics() {
       </div>
 
       <AdvancedAnalytics />
-    </div>
+    </motion.div>
   );
 }

@@ -6,6 +6,7 @@ import { useFinanceStore } from "../../store/useFinanceStore";
 import { formatCurrency, formatDate } from "../../utils/helpers";
 import Badge from "../ui/Badge";
 import EmptyState from "../ui/EmptyState";
+import Tooltip from "../ui/Tooltip";
 
 interface TransactionsTableProps {
   rows: Transaction[];
@@ -80,20 +81,22 @@ export default function TransactionsTable({
               {role === "admin" && (
                 <td className="table-cell text-right">
                   <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => onEdit(tx)}
-                      className="p-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 transition-colors"
-                      title="Edit transaction"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => deleteTransaction(tx.id)}
-                      className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-red-500 dark:text-red-400 transition-colors"
-                      title="Delete transaction"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <Tooltip content="Edit Transaction">
+                      <button
+                        onClick={() => onEdit(tx)}
+                        className="p-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 transition-colors"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    </Tooltip>
+                    <Tooltip content="Delete Transaction">
+                      <button
+                        onClick={() => deleteTransaction(tx.id)}
+                        className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-500/10 text-red-500 dark:text-red-400 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </Tooltip>
                   </div>
                 </td>
               )}

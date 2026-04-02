@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useFinanceStore } from "../../store/useFinanceStore";
 import { exportToCSV, exportToJSON } from "../../utils/export";
+import Tooltip from "../ui/Tooltip";
 
 export default function Navbar() {
   const role = useFinanceStore((s) => s.role);
@@ -36,12 +37,14 @@ export default function Navbar() {
     <header className="sticky top-0 z-30 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
       <div className="flex items-center justify-between px-4 sm:px-6 h-14">
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
-            <Menu className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-          </button>
+          <Tooltip content="Toggle Sidebar">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              <Menu className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+            </button>
+          </Tooltip>
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
             Dashboard
           </h2>
@@ -84,13 +87,15 @@ export default function Navbar() {
 
           {/* Export */}
           <div className="relative" ref={exportRef}>
-            <button
-              onClick={() => setExportOpen(!exportOpen)}
-              className="btn-ghost"
-            >
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline text-xs">Export</span>
-            </button>
+            <Tooltip content="Export Transactions">
+              <button
+                onClick={() => setExportOpen(!exportOpen)}
+                className="btn-ghost"
+              >
+                <Download className="w-4 h-4" />
+                <span className="hidden sm:inline text-xs">Export</span>
+              </button>
+            </Tooltip>
             {exportOpen && (
               <div className="absolute right-0 top-full mt-1 w-44 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden z-50">
                 <button
@@ -116,16 +121,18 @@ export default function Navbar() {
           </div>
 
           {/* Dark mode */}
-          <button
-            onClick={toggleDarkMode}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
-            {darkMode ? (
-              <Sun className="w-4 h-4 text-amber-400" />
-            ) : (
-              <Moon className="w-4 h-4 text-slate-500" />
-            )}
-          </button>
+          <Tooltip content={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}>
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              {darkMode ? (
+                <Sun className="w-4 h-4 text-amber-400" />
+              ) : (
+                <Moon className="w-4 h-4 text-slate-500" />
+              )}
+            </button>
+          </Tooltip>
         </div>
       </div>
     </header>

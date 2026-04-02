@@ -1,5 +1,6 @@
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Tooltip from "../ui/Tooltip";
 
 interface PaginationProps {
   currentPage: number;
@@ -54,13 +55,15 @@ export default function Pagination({
       </p>
 
       <div className="flex items-center gap-1">
-        <button
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-        </button>
+        <Tooltip content="Previous page">
+          <button
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+          </button>
+        </Tooltip>
 
         {pages.map((page, i) =>
           page === "..." ? (
@@ -82,13 +85,15 @@ export default function Pagination({
           ),
         )}
 
-        <button
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-400" />
-        </button>
+        <Tooltip content="Next page">
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <ChevronRight className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+          </button>
+        </Tooltip>
       </div>
     </div>
   );

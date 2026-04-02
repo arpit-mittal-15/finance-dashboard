@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Search, Filter, X, RotateCcw } from "lucide-react";
 import { useFinanceStore } from "../../store/useFinanceStore";
 import { useDebounce } from "../../hooks/useDebounce";
+import Tooltip from "../ui/Tooltip";
 
 export default function FiltersBar() {
   const filters = useFinanceStore((s) => s.filters);
@@ -42,31 +43,35 @@ export default function FiltersBar() {
             className="input-base pl-10 pr-10"
           />
           {localSearch && (
-            <button
-              onClick={() => setLocalSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <Tooltip content="Clear Search">
+              <button
+                onClick={() => setLocalSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </Tooltip>
           )}
         </div>
 
         {/* Filter toggle + Sort */}
         <div className="flex gap-2">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`btn-secondary ${
-              showFilters
-                ? "!bg-indigo-50 !text-indigo-600 !border-indigo-200 dark:!bg-indigo-500/10 dark:!text-indigo-400 dark:!border-indigo-500/30"
-                : ""
-            }`}
-          >
-            <Filter className="w-4 h-4" />
-            <span className="hidden sm:inline">Filters</span>
-            {hasActiveFilters && (
-              <span className="w-2 h-2 rounded-full bg-indigo-500" />
-            )}
-          </button>
+          <Tooltip content="Toggle Advanced Filters">
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`btn-secondary ${
+                showFilters
+                  ? "!bg-indigo-50 !text-indigo-600 !border-indigo-200 dark:!bg-indigo-500/10 dark:!text-indigo-400 dark:!border-indigo-500/30"
+                  : ""
+              }`}
+            >
+              <Filter className="w-4 h-4" />
+              <span className="hidden sm:inline">Filters</span>
+              {hasActiveFilters && (
+                <span className="w-2 h-2 rounded-full bg-indigo-500" />
+              )}
+            </button>
+          </Tooltip>
 
           <select
             onChange={(e) => {
@@ -85,16 +90,17 @@ export default function FiltersBar() {
           </select>
 
           {hasActiveFilters && (
-            <button
-              onClick={() => {
-                resetFilters();
-                setLocalSearch("");
-              }}
-              className="btn-ghost text-red-500 hover:!bg-red-50 dark:hover:!bg-red-500/10"
-              title="Clear all filters"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
+            <Tooltip content="Reset All Filters">
+              <button
+                onClick={() => {
+                  resetFilters();
+                  setLocalSearch("");
+                }}
+                className="btn-ghost text-red-500 hover:!bg-red-50 dark:hover:!bg-red-500/10"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            </Tooltip>
           )}
         </div>
       </div>

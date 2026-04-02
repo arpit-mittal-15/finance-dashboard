@@ -7,6 +7,7 @@ import FiltersBar from "./FiltersBar";
 import TransactionsTable from "./TransactionsTable";
 import TransactionModal from "./TransactionModal";
 import Pagination from "./Pagination";
+import Tooltip from "../ui/Tooltip";
 
 export default function TransactionsSection() {
   const role = useFinanceStore((s) => s.role);
@@ -97,10 +98,12 @@ export default function TransactionsSection() {
           </p>
         </div>
         {role === "admin" && (
-          <button onClick={openAdd} className="btn-primary">
-            <Plus className="w-4 h-4" />
-            Add Transaction
-          </button>
+          <Tooltip content="Create new transaction">
+            <button onClick={openAdd} className="btn-primary">
+              <Plus className="w-4 h-4" />
+              Add Transaction
+            </button>
+          </Tooltip>
         )}
       </div>
 

@@ -1,11 +1,18 @@
 import React from "react";
+import { motion } from "framer-motion";
 import BudgetSection from "../components/dashboard/BudgetSection";
 import BudgetSummaryCards from "../components/dashboard/BudgetSummaryCards";
 import BudgetDistribution from "../components/dashboard/BudgetDistribution";
 
 export default function Budgets() {
   return (
-    <div className="space-y-6">
+    <motion.div 
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6"
+    >
       <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Budgets & Planning</h2>
       
       <BudgetSummaryCards />
@@ -18,6 +25,6 @@ export default function Budgets() {
           <BudgetDistribution />
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -2,6 +2,7 @@ import React from "react";
 import { useFinanceStore } from "../../store/useFinanceStore";
 import { Target, TrendingDown, Wallet, Sparkles } from "lucide-react";
 import { formatCurrency, getMonth } from "../../utils/helpers";
+import Tooltip from "../ui/Tooltip";
 
 export default function BudgetSummaryCards() {
   const getBudgetProgress = useFinanceStore((s) => s.getBudgetProgress);
@@ -83,9 +84,11 @@ export default function BudgetSummaryCards() {
         <p className="text-xs text-indigo-100 mb-3 relative z-10 leading-relaxed">
           Auto-calculate ideal budgets based on your past spending history.
         </p>
-        <button onClick={handleAutoSuggest} className="bg-white/20 hover:bg-white/30 text-white text-xs font-medium py-2 px-3 rounded-lg transition-colors w-max relative z-10 backdrop-blur-sm">
-          Auto-Suggest Budgets
-        </button>
+        <Tooltip content="Auto-calculates a moving 3-month average">
+          <button onClick={handleAutoSuggest} className="bg-white/20 hover:bg-white/30 text-white text-xs font-medium py-2 px-3 rounded-lg transition-colors w-max relative z-10 backdrop-blur-sm shadow-sm">
+            Auto-Suggest Budgets
+          </button>
+        </Tooltip>
       </div>
     </div>
   );

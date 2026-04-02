@@ -10,6 +10,7 @@ import {
 import { useFinanceStore } from "../../store/useFinanceStore";
 import { useAnimatedCounter } from "../../hooks/useAnimatedCounter";
 import { formatCurrency, percentageChange } from "../../utils/helpers";
+import Tooltip from "../ui/Tooltip";
 
 function SummaryCard({
   title,
@@ -46,20 +47,22 @@ function SummaryCard({
           <p className={`text-2xl font-semibold ${valueColor}`}>
             {formatCurrency(animatedValue)}
           </p>
-          <div
-            className={`inline-flex items-center gap-1 text-xs font-medium ${
-              isPositive
-                ? "text-emerald-600 dark:text-emerald-400"
-                : "text-red-600 dark:text-red-400"
-            }`}
-          >
-            {isPositive ? (
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            ) : (
-              <ArrowDownRight className="w-3.5 h-3.5" />
-            )}
-            {Math.abs(change)}% vs last month
-          </div>
+          <Tooltip content="Compared to previous 30 days">
+            <div
+              className={`inline-flex items-center gap-1 text-xs font-medium cursor-help ${
+                isPositive
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-red-600 dark:text-red-400"
+              }`}
+            >
+              {isPositive ? (
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              ) : (
+                <ArrowDownRight className="w-3.5 h-3.5" />
+              )}
+              {Math.abs(change)}% vs last month
+            </div>
+          </Tooltip>
         </div>
         <div className={`p-2.5 rounded-lg ${iconBg}`}>
           <Icon className={`w-5 h-5 ${iconColor}`} />
