@@ -206,7 +206,12 @@ export const useFinanceStore = create<FinanceState>()(
         })),
 
       setSelectedAccountId: (id) =>
-        set({ selectedAccountId: id, currentPage: 1 }),
+        set({
+          selectedAccountId: id,
+          filters: { ...DEFAULT_FILTERS },
+          searchQuery: "",
+          currentPage: 1,
+        }),
 
       resetFilters: () =>
         set({

@@ -24,6 +24,14 @@ export default function FiltersBar() {
     setSearchQuery(debouncedSearch);
   }, [debouncedSearch, setSearchQuery]);
 
+  // Sync local search with store (e.g. when filters are reset externally)
+  const storeSearchQuery = useFinanceStore((s) => s.searchQuery);
+  React.useEffect(() => {
+    if (storeSearchQuery === "") {
+      setLocalSearch("");
+    }
+  }, [storeSearchQuery]);
+
   const hasActiveFilters =
     filters.type !== "all" ||
     filters.category !== "all" ||
