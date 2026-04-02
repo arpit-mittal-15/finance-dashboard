@@ -101,6 +101,7 @@ export default function Navbar() {
                 <button
                   onClick={() => {
                     exportToCSV(transactions);
+                    useFinanceStore.getState().addToast("Transactions exported to CSV", "success");
                     setExportOpen(false);
                   }}
                   className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
@@ -110,6 +111,7 @@ export default function Navbar() {
                 <button
                   onClick={() => {
                     exportToJSON(transactions);
+                    useFinanceStore.getState().addToast("Transactions exported to JSON", "success");
                     setExportOpen(false);
                   }}
                   className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"

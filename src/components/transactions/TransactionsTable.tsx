@@ -80,7 +80,7 @@ export default function TransactionsTable({
               </td>
               {role === "admin" && (
                 <td className="table-cell text-right">
-                  <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center justify-end gap-1 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                     <Tooltip content="Edit Transaction">
                       <button
                         onClick={() => onEdit(tx)}

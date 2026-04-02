@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
+import ToastContainer from "../ui/ToastContainer";
 import { useFinanceStore } from "../../store/useFinanceStore";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -28,6 +29,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </main>
       </div>
+      <ToastContainer />
     </div>
   );
 }

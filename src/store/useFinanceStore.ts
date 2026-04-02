@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { nanoid } from "nanoid";
-import type { Transaction, Filters, SortConfig, Role, Insight, BudgetProgress, TrendDataPoint, ForecastPoint } from "../types";
+import type { Transaction, Filters, SortConfig, Role, Insight, BudgetProgress, TrendDataPoint, ForecastPoint, Toast, ToastType } from "../types";
 import { INITIAL_TRANSACTIONS } from "../data/transactions";
 import { getCategoryColor } from "../data/categories";
 import { percentageChange, getMonth } from "../utils/helpers";
@@ -21,6 +21,7 @@ interface FinanceState {
   currentPage: number;
   pageSize: number;
   sidebarOpen: boolean;
+  toasts: Toast[];
 
   // Actions
   setRole: (role: Role) => void;
@@ -36,6 +37,8 @@ interface FinanceState {
   setSortBy: (s: SortConfig) => void;
   setCurrentPage: (page: number) => void;
   setPageSize: (size: number) => void;
+  addToast: (message: string, type?: Toast["type"], duration?: number) => void;
+  removeToast: (id: string) => void;
 
   // Derived selectors
   getTotals: () => { income: number; expense: number; balance: number };
@@ -54,7 +57,7 @@ interface FinanceState {
     previousExpense: number;
   };
   getSmartInsights: () => Insight[];
-  getConversationalInsights: () => string[];
+  getConversationalInsights: () => { text: string; type: "spending" | "savings" | "budget" | "info" }[];
   getBudgetProgress: () => BudgetProgress[];
   getCategoryTrends: () => TrendDataPoint[];
   getForecast: () => ForecastPoint[];
@@ -84,11 +87,14 @@ export const useFinanceStore = create<FinanceState>()(
       currentPage: 1,
       pageSize: 8,
       sidebarOpen: false,
+      toasts: [],
 
       // ── Actions ──────────────────────────────────────────
       setRole: (role) => set({ role }),
-      setBudget: (category, amount) =>
-        set((s) => ({ budgets: { ...s.budgets, [category]: amount } })),
+      setBudget: (category, amount) => {
+        set((s) => ({ budgets: { ...s.budgets, [category]: amount } }));
+        get().addToast(`Budget updated for ${category}`, "success");
+      },
 
       toggleDarkMode: () =>
         set((s) => {
@@ -109,19 +115,24 @@ export const useFinanceStore = create<FinanceState>()(
           transactions: [tx, ...s.transactions],
           currentPage: 1,
         }));
+        get().addToast("Transaction added successfully", "success");
       },
 
-      editTransaction: (id, patch) =>
+      editTransaction: (id, patch) => {
         set((s) => ({
           transactions: s.transactions.map((t) =>
             t.id === id ? { ...t, ...patch } : t,
           ),
-        })),
+        }));
+        get().addToast("Transaction updated", "success");
+      },
 
-      deleteTransaction: (id) =>
+      deleteTransaction: (id) => {
         set((s) => ({
           transactions: s.transactions.filter((t) => t.id !== id),
-        })),
+        }));
+        get().addToast("Transaction deleted", "info");
+      },
 
       setFilters: (f) =>
         set((s) => ({
@@ -143,6 +154,19 @@ export const useFinanceStore = create<FinanceState>()(
       setCurrentPage: (page) => set({ currentPage: page }),
 
       setPageSize: (size) => set({ pageSize: size, currentPage: 1 }),
+
+      addToast: (message, type = "info", duration = 3000) => {
+        const id = nanoid();
+        set((s) => ({
+          toasts: [...s.toasts, { id, message, type, duration }],
+        }));
+        setTimeout(() => get().removeToast(id), duration);
+      },
+
+      removeToast: (id) =>
+        set((s) => ({
+          toasts: s.toasts.filter((t) => t.id !== id),
+        })),
 
       // ── Derived selectors ────────────────────────────────
       getTotals: () => {
@@ -464,37 +488,51 @@ export const useFinanceStore = create<FinanceState>()(
 
       getConversationalInsights: () => {
         const { getTotals, getMonthlyComparison, transactions, getCategoryBreakdown } = get();
-        const texts: string[] = [];
+        const insights: { text: string; type: "spending" | "savings" | "budget" | "info" }[] = [];
         const comparison = getMonthlyComparison();
-        const totals = getTotals();
         const latestMonth = getMonth(new Date().toISOString());
         
         // Expense changes
         if (comparison.previousExpense > 0) {
           const change = percentageChange(comparison.currentExpense, comparison.previousExpense);
           if (change > 0) {
-            texts.push(`You spent ${change}% more this month compared to last month.`);
+            insights.push({ 
+              text: `Spending is up ${change}% this month.`,
+              type: "spending" 
+            });
           } else if (change < 0) {
-            texts.push(`Great job! You spent ${Math.abs(change)}% less this month compared to last month.`);
+            insights.push({ 
+              text: `Great job! You spent ${Math.abs(change)}% less than last month.`,
+              type: "savings" 
+            });
           }
         }
         
-        // Savings rate drop or increase
+        // Savings rate
         if (comparison.previousIncome > 0 && comparison.currentIncome > 0) {
            const prevRate = Math.round(((comparison.previousIncome - comparison.previousExpense) / comparison.previousIncome) * 100);
            const currRate = Math.round(((comparison.currentIncome - comparison.currentExpense) / comparison.currentIncome) * 100);
            
            if (currRate < prevRate) {
-              texts.push(`Your savings rate dropped from ${prevRate}% to ${currRate}%.`);
+              insights.push({ 
+                text: `Savings rate dropped from ${prevRate}% to ${currRate}%.`,
+                type: "info" 
+              });
            } else if (currRate > prevRate) {
-              texts.push(`Your savings rate improved to ${currRate}%!`);
+              insights.push({ 
+                text: `Your savings rate improved to ${currRate}%!`,
+                type: "savings" 
+              });
            }
         }
 
         // Highest expense
         const breakdowns = getCategoryBreakdown();
         if (breakdowns.length > 0) {
-          texts.push(`Your highest expense category is ${breakdowns[0].name} at ₹${breakdowns[0].value.toLocaleString("en-IN")}.`);
+          insights.push({ 
+            text: `Top expense: ${breakdowns[0].name} (₹${breakdowns[0].value.toLocaleString("en-IN")}).`,
+            type: "spending" 
+          });
         }
         
         // Budget alerts
@@ -507,12 +545,18 @@ export const useFinanceStore = create<FinanceState>()(
            const spent = spentByCategory[cat] || 0;
            if (budget > 0) {
               const perc = spent / budget;
-              if (perc >= 1) texts.push(`You have exceeded your ${cat} budget by ₹${(spent - budget).toLocaleString("en-IN")}.`);
-              else if (perc >= 0.8) texts.push(`You are nearing your limit for ${cat}. Only ₹${(budget - spent).toLocaleString("en-IN")} left.`);
+              if (perc >= 1) insights.push({ 
+                text: `${cat} budget exceeded by ₹${(spent - budget).toLocaleString("en-IN")}.`,
+                type: "budget" 
+              });
+              else if (perc >= 0.8) insights.push({ 
+                text: `${cat} budget is at ${Math.round(perc * 100)}%.`,
+                type: "budget" 
+              });
            }
         });
 
-        return texts;
+        return insights;
       },
 
       getCategoryTrends: () => {

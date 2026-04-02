@@ -2,6 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import SummaryCards from "../components/dashboard/SummaryCards";
 import ConversationalInsights from "../components/insights/ConversationalInsights";
+import InsightsPanel from "../components/insights/InsightsPanel";
 import BalanceChart from "../components/dashboard/BalanceChart";
 import CategoryChart from "../components/dashboard/CategoryChart";
 import RecentTransactions from "../components/dashboard/RecentTransactions";
@@ -13,12 +14,13 @@ export default function Overview() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="space-y-6"
+      className="space-y-8"
     >
       <div>
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Overview</h2>
         <ConversationalInsights />
       </div>
+
 
       <section>
         <SummaryCards />
@@ -35,6 +37,10 @@ export default function Overview() {
 
       <section>
         <RecentTransactions />
+      </section>
+
+      <section>
+        <InsightsPanel />
       </section>
     </motion.div>
   );
