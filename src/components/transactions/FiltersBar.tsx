@@ -6,7 +6,10 @@ import Tooltip from "../ui/Tooltip";
 
 export default function FiltersBar() {
   const filters = useFinanceStore((s) => s.filters);
+  const accounts = useFinanceStore((s) => s.accounts);
+  const selectedAccountId = useFinanceStore((s) => s.selectedAccountId);
   const setFilters = useFinanceStore((s) => s.setFilters);
+  const setSelectedAccountId = useFinanceStore((s) => s.setSelectedAccountId);
   const setSearchQuery = useFinanceStore((s) => s.setSearchQuery);
   const setSortBy = useFinanceStore((s) => s.setSortBy);
   const resetFilters = useFinanceStore((s) => s.resetFilters);
@@ -24,6 +27,7 @@ export default function FiltersBar() {
   const hasActiveFilters =
     filters.type !== "all" ||
     filters.category !== "all" ||
+    selectedAccountId !== "all" ||
     filters.dateStart !== "" ||
     filters.dateEnd !== "" ||
     localSearch !== "";
@@ -136,6 +140,24 @@ export default function FiltersBar() {
               {allCategories.map((c) => (
                 <option key={c} value={c}>
                   {c}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex-1 space-y-1">
+            <label className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              Account
+            </label>
+            <select
+              value={selectedAccountId}
+              onChange={(e) => setSelectedAccountId(e.target.value)}
+              className="input-base"
+            >
+              <option value="all">All accounts</option>
+              {accounts.map((acc) => (
+                <option key={acc.id} value={acc.id}>
+                  {acc.name}
                 </option>
               ))}
             </select>

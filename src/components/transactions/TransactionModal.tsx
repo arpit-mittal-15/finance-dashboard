@@ -23,10 +23,14 @@ export default function TransactionModal({
   onClose,
   editing,
 }: TransactionModalProps) {
+  const accounts = useFinanceStore((s) => s.accounts);
   const addTransaction = useFinanceStore((s) => s.addTransaction);
   const editTransaction = useFinanceStore((s) => s.editTransaction);
 
-  const [form, setForm] = useState(EMPTY_FORM);
+  const [form, setForm] = useState({
+    ...EMPTY_FORM,
+    accountId: accounts[0]?.id || "",
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -37,12 +41,16 @@ export default function TransactionModal({
         category: editing.category,
         type: editing.type,
         description: editing.description,
+        accountId: editing.accountId,
       });
     } else {
-      setForm({ ...EMPTY_FORM });
+      setForm({
+        ...EMPTY_FORM,
+        accountId: accounts[0]?.id || "",
+      });
     }
     setErrors({});
-  }, [editing, open]);
+  }, [editing, open, accounts]);
 
   const validate = () => {
     const errs: Record<string, string> = {};
@@ -51,6 +59,7 @@ export default function TransactionModal({
       errs.amount = "Amount must be greater than 0";
     if (!form.category) errs.category = "Category is required";
     if (!form.description.trim()) errs.description = "Description is required";
+    if (!form.accountId) errs.accountId = "Account is required";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -65,6 +74,7 @@ export default function TransactionModal({
       category: form.category,
       type: form.type,
       description: form.description.trim(),
+      accountId: form.accountId,
     };
 
     if (editing) {
@@ -108,6 +118,29 @@ export default function TransactionModal({
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Account Selection */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Account
+          </label>
+          <select
+            value={form.accountId}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, accountId: e.target.value }))
+            }
+            className={`input-base ${errors.accountId ? "!border-red-400 !ring-red-400/20" : ""}`}
+          >
+            {accounts.map((acc) => (
+              <option key={acc.id} value={acc.id}>
+                {acc.name} ({acc.type.toUpperCase()})
+              </option>
+            ))}
+          </select>
+          {errors.accountId && (
+            <p className="text-xs text-red-500">{errors.accountId}</p>
+          )}
         </div>
 
         {/* Amount */}

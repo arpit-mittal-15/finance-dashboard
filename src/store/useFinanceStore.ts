@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { nanoid } from "nanoid";
-import type { Transaction, Filters, SortConfig, Role, Insight, BudgetProgress, TrendDataPoint, ForecastPoint, Toast, ToastType } from "../types";
+import type { Transaction, Filters, SortConfig, Role, Insight, BudgetProgress, TrendDataPoint, ForecastPoint, Toast, ToastType, Account } from "../types";
 import { INITIAL_TRANSACTIONS } from "../data/transactions";
 import { getCategoryColor } from "../data/categories";
 import { percentageChange, getMonth } from "../utils/helpers";
@@ -10,12 +10,14 @@ import { percentageChange, getMonth } from "../utils/helpers";
 interface FinanceState {
   // Core data
   transactions: Transaction[];
+  accounts: Account[];
   role: Role;
   darkMode: boolean;
   budgets: Record<string, number>;
 
   // UI state
   filters: Filters;
+  selectedAccountId: string | "all";
   searchQuery: string;
   sortBy: SortConfig;
   currentPage: number;
@@ -32,6 +34,7 @@ interface FinanceState {
   editTransaction: (id: string, patch: Partial<Transaction>) => void;
   deleteTransaction: (id: string) => void;
   setFilters: (f: Partial<Filters>) => void;
+  setSelectedAccountId: (id: string | "all") => void;
   resetFilters: () => void;
   setSearchQuery: (q: string) => void;
   setSortBy: (s: SortConfig) => void;
@@ -42,6 +45,7 @@ interface FinanceState {
 
   // Derived selectors
   getTotals: () => { income: number; expense: number; balance: number };
+  getAccountBalances: () => Record<string, number>;
   getFilteredTransactions: () => Transaction[];
   getCategoryBreakdown: () => { name: string; value: number; color: string }[];
   getBalanceOverTime: () => {
@@ -62,6 +66,9 @@ interface FinanceState {
   getCategoryTrends: () => TrendDataPoint[];
   getForecast: () => ForecastPoint[];
   getAllCategories: () => string[];
+  addAccount: (account: Omit<Account, "id">) => void;
+  updateAccount: (id: string, patch: Partial<Account>) => void;
+  deleteAccount: (id: string) => void;
 }
 
 // ── Default filters ──────────────────────────────────────────
@@ -72,12 +79,20 @@ const DEFAULT_FILTERS: Filters = {
   dateEnd: "",
 };
 
+const DEFAULT_ACCOUNTS: Account[] = [
+  { id: "bank-1", name: "Main Bank Account", type: "bank", balance: 25000, color: "#4f46e5" },
+  { id: "wallet-1", name: "Personal Wallet", type: "wallet", balance: 5000, color: "#ec4899" },
+  { id: "upi-1", name: "UPI Pay", type: "upi", balance: 1000, color: "#10b981" },
+];
+
 // ── Store ────────────────────────────────────────────────────
 export const useFinanceStore = create<FinanceState>()(
   persist(
     (set, get) => ({
       // ── Initial state ────────────────────────────────────
       transactions: INITIAL_TRANSACTIONS,
+      accounts: DEFAULT_ACCOUNTS,
+      selectedAccountId: "all",
       role: "viewer",
       darkMode: false,
       budgets: {},
@@ -111,26 +126,76 @@ export const useFinanceStore = create<FinanceState>()(
 
       addTransaction: (t) => {
         const tx: Transaction = { ...t, id: nanoid() };
-        set((s) => ({
-          transactions: [tx, ...s.transactions],
-          currentPage: 1,
-        }));
+        set((s) => {
+          const updatedAccounts = s.accounts.map((acc) => {
+            if (acc.id === t.accountId) {
+              const diff = t.type === "income" ? t.amount : -t.amount;
+              return { ...acc, balance: acc.balance + diff };
+            }
+            return acc;
+          });
+
+          return {
+            transactions: [tx, ...s.transactions],
+            accounts: updatedAccounts,
+            currentPage: 1,
+          };
+        });
         get().addToast("Transaction added successfully", "success");
       },
 
       editTransaction: (id, patch) => {
-        set((s) => ({
-          transactions: s.transactions.map((t) =>
-            t.id === id ? { ...t, ...patch } : t,
-          ),
-        }));
+        set((s) => {
+          const oldTx = s.transactions.find((t) => t.id === id);
+          if (!oldTx) return s;
+
+          let updatedAccounts = [...s.accounts];
+
+          // Revert old transaction's impact
+          updatedAccounts = updatedAccounts.map((acc) => {
+            if (acc.id === oldTx.accountId) {
+              const diff = oldTx.type === "income" ? -oldTx.amount : oldTx.amount;
+              return { ...acc, balance: acc.balance + diff };
+            }
+            return acc;
+          });
+
+          // Apply new transaction's impact
+          const newTx = { ...oldTx, ...patch };
+          updatedAccounts = updatedAccounts.map((acc) => {
+            if (acc.id === newTx.accountId) {
+              const diff = newTx.type === "income" ? newTx.amount : -newTx.amount;
+              return { ...acc, balance: acc.balance + diff };
+            }
+            return acc;
+          });
+
+          return {
+            transactions: s.transactions.map((t) => (t.id === id ? newTx : t)),
+            accounts: updatedAccounts,
+          };
+        });
         get().addToast("Transaction updated", "success");
       },
 
       deleteTransaction: (id) => {
-        set((s) => ({
-          transactions: s.transactions.filter((t) => t.id !== id),
-        }));
+        set((s) => {
+          const oldTx = s.transactions.find((t) => t.id === id);
+          if (!oldTx) return s;
+
+          const updatedAccounts = s.accounts.map((acc) => {
+            if (acc.id === oldTx.accountId) {
+              const diff = oldTx.type === "income" ? -oldTx.amount : oldTx.amount;
+              return { ...acc, balance: acc.balance + diff };
+            }
+            return acc;
+          });
+
+          return {
+            transactions: s.transactions.filter((t) => t.id !== id),
+            accounts: updatedAccounts,
+          };
+        });
         get().addToast("Transaction deleted", "info");
       },
 
@@ -140,9 +205,13 @@ export const useFinanceStore = create<FinanceState>()(
           currentPage: 1,
         })),
 
+      setSelectedAccountId: (id) =>
+        set({ selectedAccountId: id, currentPage: 1 }),
+
       resetFilters: () =>
         set({
           filters: { ...DEFAULT_FILTERS },
+          selectedAccountId: "all",
           searchQuery: "",
           currentPage: 1,
         }),
@@ -157,9 +226,10 @@ export const useFinanceStore = create<FinanceState>()(
 
       addToast: (message, type = "info", duration = 3000) => {
         const id = nanoid();
-        set((s) => ({
-          toasts: [...s.toasts, { id, message, type, duration }],
-        }));
+        set((s) => {
+          const newToasts = [...s.toasts, { id, message, type, duration }];
+          return { toasts: newToasts.slice(-2) };
+        });
         setTimeout(() => get().removeToast(id), duration);
       },
 
@@ -170,7 +240,7 @@ export const useFinanceStore = create<FinanceState>()(
 
       // ── Derived selectors ────────────────────────────────
       getTotals: () => {
-        const tx = get().transactions;
+        const tx = get().getFilteredTransactions();
         const income = tx
           .filter((t) => t.type === "income")
           .reduce((sum, t) => sum + t.amount, 0);
@@ -180,8 +250,29 @@ export const useFinanceStore = create<FinanceState>()(
         return { income, expense, balance: income - expense };
       },
 
+      getAccountBalances: () => {
+        const tx = get().transactions;
+        const accounts = get().accounts;
+        const balances: Record<string, number> = {};
+
+        accounts.forEach((acc) => {
+          const accTx = tx.filter((t) => t.accountId === acc.id);
+          const income = accTx
+            .filter((t) => t.type === "income")
+            .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+          const expense = accTx
+            .filter((t) => t.type === "expense")
+            .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+          
+          const baseBalance = Number(acc.balance) || 0;
+          balances[acc.id] = baseBalance + (income - expense);
+        });
+
+        return balances;
+      },
+
       getFilteredTransactions: () => {
-        const { transactions, filters, searchQuery, sortBy } = get();
+        const { transactions, filters, searchQuery, sortBy, selectedAccountId } = get();
         let list = [...transactions];
 
         // Type filter
@@ -200,6 +291,11 @@ export const useFinanceStore = create<FinanceState>()(
         }
         if (filters.dateEnd) {
           list = list.filter((t) => t.date <= filters.dateEnd);
+        }
+
+        // Account filter
+        if (selectedAccountId !== "all") {
+          list = list.filter((t) => t.accountId === selectedAccountId);
         }
 
         // Search
@@ -228,10 +324,15 @@ export const useFinanceStore = create<FinanceState>()(
       },
 
       getCategoryBreakdown: () => {
-        const tx = get().transactions.filter((t) => t.type === "expense");
+        const { selectedAccountId } = get();
+        const tx = get().transactions.filter(
+          (t) =>
+            t.type === "expense" &&
+            (selectedAccountId === "all" || t.accountId === selectedAccountId),
+        );
         const map: Record<string, number> = {};
         tx.forEach((t) => {
-          map[t.category] = (map[t.category] || 0) + t.amount;
+          map[t.category] = (map[t.category] || 0) + (Number(t.amount) || 0);
         });
         return Object.entries(map)
           .map(([name, value]) => ({
@@ -243,9 +344,11 @@ export const useFinanceStore = create<FinanceState>()(
       },
 
       getBalanceOverTime: () => {
-        const sorted = [...get().transactions].sort((a, b) =>
-          a.date.localeCompare(b.date),
+        const { selectedAccountId } = get();
+        const tx = get().transactions.filter(
+          (t) => selectedAccountId === "all" || t.accountId === selectedAccountId,
         );
+        const sorted = [...tx].sort((a, b) => a.date.localeCompare(b.date));
         const points: {
           date: string;
           balance: number;
@@ -259,10 +362,11 @@ export const useFinanceStore = create<FinanceState>()(
           if (!dateMap[t.date]) {
             dateMap[t.date] = { income: 0, expense: 0 };
           }
+          const val = Number(t.amount) || 0;
           if (t.type === "income") {
-            dateMap[t.date].income += t.amount;
+            dateMap[t.date].income += val;
           } else {
-            dateMap[t.date].expense += t.amount;
+            dateMap[t.date].expense += val;
           }
         });
 
@@ -283,7 +387,10 @@ export const useFinanceStore = create<FinanceState>()(
       },
 
       getMonthlyComparison: () => {
-        const tx = get().transactions;
+        const { selectedAccountId } = get();
+        const tx = get().transactions.filter(
+          (t) => selectedAccountId === "all" || t.accountId === selectedAccountId,
+        );
         const months = [...new Set(tx.map((t) => getMonth(t.date)))].sort();
         const latest = months[months.length - 1] || "";
         const prev = months[months.length - 2] || "";
@@ -292,10 +399,10 @@ export const useFinanceStore = create<FinanceState>()(
           const filtered = tx.filter((t) => getMonth(t.date) === month);
           const income = filtered
             .filter((t) => t.type === "income")
-            .reduce((s, t) => s + t.amount, 0);
+            .reduce((s, t) => s + (Number(t.amount) || 0), 0);
           const expense = filtered
             .filter((t) => t.type === "expense")
-            .reduce((s, t) => s + t.amount, 0);
+            .reduce((s, t) => s + (Number(t.amount) || 0), 0);
           return { income, expense };
         };
 
@@ -462,11 +569,14 @@ export const useFinanceStore = create<FinanceState>()(
       },
 
       getBudgetProgress: () => {
-        const { transactions, budgets } = get();
+        const { transactions, budgets, selectedAccountId } = get();
         const latestMonth = getMonth(new Date().toISOString());
-        
+
         const currentMonthExpenses = transactions.filter(
-          (t) => t.type === "expense" && getMonth(t.date) === latestMonth
+          (t) =>
+            t.type === "expense" &&
+            getMonth(t.date) === latestMonth &&
+            (selectedAccountId === "all" || t.accountId === selectedAccountId),
         );
         
         const spentByCategory: Record<string, number> = {};
@@ -536,8 +646,13 @@ export const useFinanceStore = create<FinanceState>()(
         }
         
         // Budget alerts
-        const { budgets } = get();
-        const currentMonthExpenses = transactions.filter(t => t.type === "expense" && getMonth(t.date) === latestMonth);
+        const { budgets, selectedAccountId } = get();
+        const currentMonthExpenses = transactions.filter(
+          (t) =>
+            t.type === "expense" &&
+            getMonth(t.date) === latestMonth &&
+            (selectedAccountId === "all" || t.accountId === selectedAccountId),
+        );
         const spentByCategory: Record<string, number> = {};
         currentMonthExpenses.forEach(t => spentByCategory[t.category] = (spentByCategory[t.category] || 0) + t.amount);
         
@@ -560,8 +675,13 @@ export const useFinanceStore = create<FinanceState>()(
       },
 
       getCategoryTrends: () => {
-        const tx = get().transactions.filter(t => t.type === "expense");
-        const months = [...new Set(tx.map(t => getMonth(t.date)))].sort();
+        const { selectedAccountId } = get();
+        const tx = get().transactions.filter(
+          (t) =>
+            t.type === "expense" &&
+            (selectedAccountId === "all" || t.accountId === selectedAccountId),
+        );
+        const months = [...new Set(tx.map((t) => getMonth(t.date)))].sort();
         
         return months.map(month => {
             const point: TrendDataPoint = { date: month };
@@ -575,8 +695,13 @@ export const useFinanceStore = create<FinanceState>()(
 
       getForecast: () => {
         // Simple moving average forecast
-        const tx = get().transactions.filter(t => t.type === "expense");
-        const months = [...new Set(tx.map(t => getMonth(t.date)))].sort();
+        const { selectedAccountId } = get();
+        const tx = get().transactions.filter(
+          (t) =>
+            t.type === "expense" &&
+            (selectedAccountId === "all" || t.accountId === selectedAccountId),
+        );
+        const months = [...new Set(tx.map((t) => getMonth(t.date)))].sort();
         
         const data: ForecastPoint[] = months.map(m => {
            const actual = tx.filter(t => getMonth(t.date) === m).reduce((sum, t) => sum + t.amount, 0);
@@ -601,11 +726,43 @@ export const useFinanceStore = create<FinanceState>()(
         
         return data;
       },
+
+      addAccount: (account) => {
+        const id = nanoid();
+        set((s) => ({
+          accounts: [...s.accounts, { ...account, id }],
+        }));
+        get().addToast(`Account "${account.name}" added`, "success");
+      },
+
+      updateAccount: (id, patch) => {
+        set((s) => ({
+          accounts: s.accounts.map((acc) =>
+            acc.id === id ? { ...acc, ...patch } : acc,
+          ),
+        }));
+        get().addToast("Account updated", "success");
+      },
+
+      deleteAccount: (id) => {
+        const accounts = get().accounts;
+        if (accounts.length <= 1) {
+          get().addToast("Cannot delete the only account", "error");
+          return;
+        }
+        set((s) => ({
+          accounts: s.accounts.filter((acc) => acc.id !== id),
+          transactions: s.transactions.filter((t) => t.accountId !== id),
+        }));
+        get().addToast("Account deleted", "info");
+      },
     }),
     {
       name: "financeflow-store",
       partialize: (state) => ({
         transactions: state.transactions,
+        accounts: state.accounts,
+        selectedAccountId: state.selectedAccountId,
         role: state.role,
         darkMode: state.darkMode,
         budgets: state.budgets,

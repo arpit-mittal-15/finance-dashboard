@@ -20,48 +20,16 @@ export default function TransactionsSection() {
   const filters = useFinanceStore((s) => s.filters);
   const searchQuery = useFinanceStore((s) => s.searchQuery);
   const sortBy = useFinanceStore((s) => s.sortBy);
+  const selectedAccountId = useFinanceStore((s) => s.selectedAccountId);
+  const getFilteredTransactions = useFinanceStore((s) => s.getFilteredTransactions);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
 
-  // Compute filtered transactions with proper reactivity
+  // Compute filtered transactions using the store's central logic
   const filtered = useMemo(() => {
-    let list = [...transactions];
-
-    if (filters.type !== "all") {
-      list = list.filter((t) => t.type === filters.type);
-    }
-    if (filters.category !== "all") {
-      list = list.filter((t) => t.category === filters.category);
-    }
-    if (filters.dateStart) {
-      list = list.filter((t) => t.date >= filters.dateStart);
-    }
-    if (filters.dateEnd) {
-      list = list.filter((t) => t.date <= filters.dateEnd);
-    }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter(
-        (t) =>
-          t.category.toLowerCase().includes(q) ||
-          t.description.toLowerCase().includes(q) ||
-          t.type.toLowerCase().includes(q) ||
-          t.amount.toString().includes(q) ||
-          t.date.includes(q),
-      );
-    }
-
-    list.sort((a, b) => {
-      const dir = sortBy.direction === "asc" ? 1 : -1;
-      if (sortBy.field === "date") {
-        return a.date.localeCompare(b.date) * dir;
-      }
-      return (a.amount - b.amount) * dir;
-    });
-
-    return list;
-  }, [transactions, filters, searchQuery, sortBy]);
+    return getFilteredTransactions();
+  }, [transactions, filters, searchQuery, sortBy, selectedAccountId, getFilteredTransactions]);
 
   // Pagination
   const totalPages = Math.ceil(filtered.length / pageSize);

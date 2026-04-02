@@ -6,6 +6,7 @@ import InsightsPanel from "../components/insights/InsightsPanel";
 import BalanceChart from "../components/dashboard/BalanceChart";
 import CategoryChart from "../components/dashboard/CategoryChart";
 import RecentTransactions from "../components/dashboard/RecentTransactions";
+import AccountsList from "../components/dashboard/AccountsList";
 
 export default function Overview() {
   return (
@@ -20,6 +21,8 @@ export default function Overview() {
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">Overview</h2>
         <ConversationalInsights />
       </div>
+
+      <AccountsList />
 
 
       <section>

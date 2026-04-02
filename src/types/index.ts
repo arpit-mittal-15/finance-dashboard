@@ -1,3 +1,13 @@
+export type AccountType = "bank" | "wallet" | "upi";
+
+export interface Account {
+  id: string;
+  name: string;
+  type: AccountType;
+  balance: number;
+  color: string;
+}
+
 // ── Transaction ──────────────────────────────────────────────
 export type TransactionType = "income" | "expense";
 
@@ -8,6 +18,7 @@ export interface Transaction {
   category: string;
   type: TransactionType;
   description: string;
+  accountId: string;
 }
 
 // ── Role ─────────────────────────────────────────────────────

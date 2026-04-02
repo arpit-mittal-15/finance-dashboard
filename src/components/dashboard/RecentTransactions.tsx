@@ -8,12 +8,11 @@ import { Transaction } from "../../types";
 
 export default function RecentTransactions() {
   const transactions = useFinanceStore((s) => s.transactions);
+  const filters = useFinanceStore((s) => s.filters);
+  const selectedAccountId = useFinanceStore((s) => s.selectedAccountId);
+  const getFilteredTransactions = useFinanceStore((s) => s.getFilteredTransactions);
   
-  // Assuming transactions are already sorted desc by date in the store, just take top 5
-  // But let's sort to be safe
-  const recent = [...transactions]
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 5);
+  const recent = getFilteredTransactions().slice(0, 5);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
