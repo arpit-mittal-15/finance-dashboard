@@ -1,5 +1,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   Receipt,
@@ -7,25 +8,21 @@ import {
   Settings,
   X,
   BarChart3,
+  PieChart
 } from "lucide-react";
 import { useFinanceStore } from "../../store/useFinanceStore";
 
 const NAV_ITEMS = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "transactions", label: "Transactions", icon: Receipt },
-  { id: "insights", label: "Insights", icon: Lightbulb },
-  { id: "settings", label: "Settings", icon: Settings, disabled: true },
+  { path: "/", label: "Overview", icon: LayoutDashboard },
+  { path: "/analytics", label: "Analytics", icon: PieChart },
+  { path: "/budgets", label: "Budgets", icon: Lightbulb },
+  { path: "/transactions", label: "Transactions", icon: Receipt },
+  { path: "/settings", label: "Settings", icon: Settings, disabled: true },
 ];
 
 export default function Sidebar() {
   const sidebarOpen = useFinanceStore((s) => s.sidebarOpen);
   const setSidebarOpen = useFinanceStore((s) => s.setSidebarOpen);
-
-  const scrollTo = (id: string) => {
-    const el = document.getElementById(`section-${id}`);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-    setSidebarOpen(false);
-  };
 
   const sidebarContent = (
     <div className="flex flex-col h-full bg-slate-900">
@@ -49,19 +46,32 @@ export default function Sidebar() {
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5">
         {NAV_ITEMS.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => !item.disabled && scrollTo(item.id)}
-            disabled={item.disabled}
-            className={`sidebar-link w-full ${
-              item.disabled
-                ? "text-slate-600 cursor-not-allowed"
-                : "text-slate-400 hover:text-white hover:bg-slate-800"
-            }`}
-          >
-            <item.icon className="w-4 h-4" />
-            <span>{item.label}</span>
-          </button>
+          item.disabled ? (
+            <button
+              key={item.path}
+              disabled
+              className="sidebar-link w-full text-slate-600 cursor-not-allowed flex items-center gap-3 px-3 py-2 rounded-lg"
+            >
+              <item.icon className="w-4 h-4" />
+              <span>{item.label}</span>
+            </button>
+          ) : (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              onClick={() => setSidebarOpen(false)}
+              className={({ isActive }) =>
+                `sidebar-link w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                  isActive
+                    ? "bg-slate-800 text-white"
+                    : "text-slate-400 hover:text-white hover:bg-slate-800"
+                }`
+              }
+            >
+              <item.icon className="w-4 h-4" />
+              <span>{item.label}</span>
+            </NavLink>
+          )
         ))}
       </nav>
 

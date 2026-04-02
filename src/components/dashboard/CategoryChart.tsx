@@ -77,12 +77,12 @@ export default function CategoryChart({
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.15 }}
-      className="glass-card p-5"
+      className="glass-card p-5 h-full flex flex-col"
     >
       <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
         Spending by Category
       </h3>
-      <div className="h-[200px]">
+      <div className="flex-1 min-h-[200px] w-full">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie

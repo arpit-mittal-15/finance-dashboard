@@ -59,14 +59,14 @@ export default function BalanceChart({ dateFrom = "" }: { dateFrom?: string }) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.1 }}
-      className="glass-card p-5"
+      className="glass-card p-5 h-full flex flex-col"
     >
       <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
         Balance Over Time
       </h3>
-      <div className="h-[280px]">
+      <div className="flex-1 min-h-[250px] w-full">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data}>
+          <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="balGrad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="#6366f1" stopOpacity={0.15} />
@@ -77,18 +77,21 @@ export default function BalanceChart({ dateFrom = "" }: { dateFrom?: string }) {
               strokeDasharray="3 3"
               stroke="currentColor"
               className="text-slate-100 dark:text-slate-800"
+              vertical={false}
             />
             <XAxis
               dataKey="date"
               tick={{ fontSize: 11, fill: "#94a3b8" }}
               tickLine={false}
               axisLine={false}
+              dy={10}
             />
             <YAxis
               tick={{ fontSize: 11, fill: "#94a3b8" }}
               tickLine={false}
               axisLine={false}
               tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
+              width={40}
             />
             <Tooltip content={<CustomTooltip />} />
             <Area

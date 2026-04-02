@@ -57,3 +57,24 @@ export interface Insight {
   change?: number; // percentage
   type: "positive" | "negative" | "neutral" | "warning";
 }
+
+// ── Budgets ──────────────────────────────────────────────────
+export interface BudgetProgress {
+  category: string;
+  budget: number;
+  spent: number;
+  remaining: number;
+  percentage: number;
+}
+
+// ── Advanced Chart Data ──────────────────────────────────────
+export interface TrendDataPoint {
+  date: string;
+  [category: string]: string | number; // "YYYY-MM" -> spending amount per category
+}
+
+export interface ForecastPoint {
+  month: string;
+  actual?: number;
+  forecast?: number;
+}

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { nanoid } from "nanoid";
-import type { Transaction, Filters, SortConfig, Role, Insight } from "../types";
+import type { Transaction, Filters, SortConfig, Role, Insight, BudgetProgress, TrendDataPoint, ForecastPoint } from "../types";
 import { INITIAL_TRANSACTIONS } from "../data/transactions";
 import { getCategoryColor } from "../data/categories";
 import { percentageChange, getMonth } from "../utils/helpers";
@@ -12,6 +12,7 @@ interface FinanceState {
   transactions: Transaction[];
   role: Role;
   darkMode: boolean;
+  budgets: Record<string, number>;
 
   // UI state
   filters: Filters;
@@ -23,6 +24,7 @@ interface FinanceState {
 
   // Actions
   setRole: (role: Role) => void;
+  setBudget: (category: string, amount: number) => void;
   toggleDarkMode: () => void;
   setSidebarOpen: (open: boolean) => void;
   addTransaction: (t: Omit<Transaction, "id">) => void;
@@ -52,6 +54,10 @@ interface FinanceState {
     previousExpense: number;
   };
   getSmartInsights: () => Insight[];
+  getConversationalInsights: () => string[];
+  getBudgetProgress: () => BudgetProgress[];
+  getCategoryTrends: () => TrendDataPoint[];
+  getForecast: () => ForecastPoint[];
   getAllCategories: () => string[];
 }
 
@@ -71,6 +77,7 @@ export const useFinanceStore = create<FinanceState>()(
       transactions: INITIAL_TRANSACTIONS,
       role: "viewer",
       darkMode: false,
+      budgets: {},
       filters: { ...DEFAULT_FILTERS },
       searchQuery: "",
       sortBy: { field: "date", direction: "desc" },
@@ -80,6 +87,8 @@ export const useFinanceStore = create<FinanceState>()(
 
       // ── Actions ──────────────────────────────────────────
       setRole: (role) => set({ role }),
+      setBudget: (category, amount) =>
+        set((s) => ({ budgets: { ...s.budgets, [category]: amount } })),
 
       toggleDarkMode: () =>
         set((s) => {
@@ -427,6 +436,127 @@ export const useFinanceStore = create<FinanceState>()(
         const cats = get().transactions.map((t) => t.category);
         return [...new Set(cats)].sort();
       },
+
+      getBudgetProgress: () => {
+        const { transactions, budgets } = get();
+        const latestMonth = getMonth(new Date().toISOString());
+        
+        const currentMonthExpenses = transactions.filter(
+          (t) => t.type === "expense" && getMonth(t.date) === latestMonth
+        );
+        
+        const spentByCategory: Record<string, number> = {};
+        currentMonthExpenses.forEach((t) => {
+          spentByCategory[t.category] = (spentByCategory[t.category] || 0) + t.amount;
+        });
+
+        return Object.entries(budgets).map(([category, budget]) => {
+          const spent = spentByCategory[category] || 0;
+          return {
+            category,
+            budget,
+            spent,
+            remaining: Math.max(0, budget - spent),
+            percentage: budget > 0 ? Math.min(100, Math.round((spent / budget) * 100)) : 0,
+          };
+        }).sort((a, b) => b.percentage - a.percentage);
+      },
+
+      getConversationalInsights: () => {
+        const { getTotals, getMonthlyComparison, transactions, getCategoryBreakdown } = get();
+        const texts: string[] = [];
+        const comparison = getMonthlyComparison();
+        const totals = getTotals();
+        const latestMonth = getMonth(new Date().toISOString());
+        
+        // Expense changes
+        if (comparison.previousExpense > 0) {
+          const change = percentageChange(comparison.currentExpense, comparison.previousExpense);
+          if (change > 0) {
+            texts.push(`You spent ${change}% more this month compared to last month.`);
+          } else if (change < 0) {
+            texts.push(`Great job! You spent ${Math.abs(change)}% less this month compared to last month.`);
+          }
+        }
+        
+        // Savings rate drop or increase
+        if (comparison.previousIncome > 0 && comparison.currentIncome > 0) {
+           const prevRate = Math.round(((comparison.previousIncome - comparison.previousExpense) / comparison.previousIncome) * 100);
+           const currRate = Math.round(((comparison.currentIncome - comparison.currentExpense) / comparison.currentIncome) * 100);
+           
+           if (currRate < prevRate) {
+              texts.push(`Your savings rate dropped from ${prevRate}% to ${currRate}%.`);
+           } else if (currRate > prevRate) {
+              texts.push(`Your savings rate improved to ${currRate}%!`);
+           }
+        }
+
+        // Highest expense
+        const breakdowns = getCategoryBreakdown();
+        if (breakdowns.length > 0) {
+          texts.push(`Your highest expense category is ${breakdowns[0].name} at ₹${breakdowns[0].value.toLocaleString("en-IN")}.`);
+        }
+        
+        // Budget alerts
+        const { budgets } = get();
+        const currentMonthExpenses = transactions.filter(t => t.type === "expense" && getMonth(t.date) === latestMonth);
+        const spentByCategory: Record<string, number> = {};
+        currentMonthExpenses.forEach(t => spentByCategory[t.category] = (spentByCategory[t.category] || 0) + t.amount);
+        
+        Object.entries(budgets).forEach(([cat, budget]) => {
+           const spent = spentByCategory[cat] || 0;
+           if (budget > 0) {
+              const perc = spent / budget;
+              if (perc >= 1) texts.push(`You have exceeded your ${cat} budget by ₹${(spent - budget).toLocaleString("en-IN")}.`);
+              else if (perc >= 0.8) texts.push(`You are nearing your limit for ${cat}. Only ₹${(budget - spent).toLocaleString("en-IN")} left.`);
+           }
+        });
+
+        return texts;
+      },
+
+      getCategoryTrends: () => {
+        const tx = get().transactions.filter(t => t.type === "expense");
+        const months = [...new Set(tx.map(t => getMonth(t.date)))].sort();
+        
+        return months.map(month => {
+            const point: TrendDataPoint = { date: month };
+            const monthTx = tx.filter(t => getMonth(t.date) === month);
+            monthTx.forEach(t => {
+               point[t.category] = ((point[t.category] as number) || 0) + t.amount;
+            });
+            return point;
+        });
+      },
+
+      getForecast: () => {
+        // Simple moving average forecast
+        const tx = get().transactions.filter(t => t.type === "expense");
+        const months = [...new Set(tx.map(t => getMonth(t.date)))].sort();
+        
+        const data: ForecastPoint[] = months.map(m => {
+           const actual = tx.filter(t => getMonth(t.date) === m).reduce((sum, t) => sum + t.amount, 0);
+           return { month: m, actual };
+        });
+        
+        if (data.length >= 3) {
+            // Predict next month based on last 3
+            const last3 = data.slice(-3);
+            const avg = last3.reduce((sum, d) => sum + (d.actual || 0), 0) / 3;
+            
+            // Create next month string
+            const lastMonthStr = data[data.length - 1].month;
+            const [y, m] = lastMonthStr.split('-');
+            const nextD = new Date(parseInt(y), parseInt(m), 1);
+            const nextMonthStr = getMonth(nextD.toISOString());
+            
+            data.push({ month: nextMonthStr, forecast: Math.round(avg) });
+            // Add trailing forecast points to last actual for visual connection
+            data[data.length - 2].forecast = data[data.length - 2].actual;
+        }
+        
+        return data;
+      },
     }),
     {
       name: "financeflow-store",
@@ -434,6 +564,7 @@ export const useFinanceStore = create<FinanceState>()(
         transactions: state.transactions,
         role: state.role,
         darkMode: state.darkMode,
+        budgets: state.budgets,
         pageSize: state.pageSize,
       }),
     },
